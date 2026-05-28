@@ -1475,6 +1475,7 @@ const AnalyticsTab = ({ tier }: { tier: number }) => {
 const SalaryTab = ({ tier }: { tier: number }) => {
   const [doctorStats,    setDoctorStats]    = useState<DoctorStat[]>([]);
   const [loading,        setLoading]        = useState(true);
+  const [salaryRoleFilter, setSalaryRoleFilter] = useState<string>("all");
   const [editingId,      setEditingId]      = useState<string | null>(null);
   const [salaryType,     setSalaryType]     = useState<"fixed"|"percentage"|"mixed">("fixed");
   const [salaryFixed,    setSalaryFixed]    = useState("");
@@ -1554,11 +1555,33 @@ const SalaryTab = ({ tier }: { tier: number }) => {
 
 
       <div className="bg-card border border-border rounded-2xl divide-y divide-border overflow-hidden">
+        {/* Role filter tabs */}
+        <div className="flex gap-1 flex-wrap p-3 border-b border-border bg-muted/30">
+          {[
+            { key: "all",          label: "All Staff"    },
+            { key: "doctor",       label: "Doctors"      },
+            { key: "reception",    label: "Reception"    },
+            { key: "nurse",        label: "Nurses"       },
+            { key: "lab_staff",    label: "Lab Staff"    },
+            { key: "radiologist",  label: "Radiologists" },
+            { key: "housekeeping", label: "Housekeeping" },
+            { key: "pharmacist",   label: "Pharmacists"  },
+          ].map(r => (
+            <button key={r.key} onClick={() => setSalaryRoleFilter(r.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                salaryRoleFilter === r.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground border border-border"
+              }`}>
+              {r.label}
+            </button>
+          ))}
+        </div>
         {loading
           ? <div className="h-24 m-4 bg-muted animate-pulse rounded-xl" />
-          : doctorStats.length === 0
-            ? <div className="p-8 text-center text-sm text-muted-foreground">No doctors found</div>
-            : doctorStats.map(d => (
+          : doctorStats.filter(d => salaryRoleFilter === "all" || d.role === salaryRoleFilter).length === 0
+            ? <div className="p-8 text-center text-sm text-muted-foreground">No staff found</div>
+            : doctorStats.filter(d => salaryRoleFilter === "all" || d.role === salaryRoleFilter).map(d => (
               <div key={d.staffId || d.doctorId} className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
