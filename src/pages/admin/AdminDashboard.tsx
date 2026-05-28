@@ -852,6 +852,7 @@ const StaffTab = () => {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Room / Station</label>
                   <Input placeholder="e.g. Lab 3, Room 204" value={form.room} onChange={e => set("room", e.target.value)} className="h-11 rounded-xl" />
                 </div>
+                {["doctor","lab_staff","radiologist","nurse"].includes(activeRole) && (
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Department</label>
                   <div className="relative">
@@ -863,6 +864,7 @@ const StaffTab = () => {
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   </div>
                 </div>
+                )}
               </div>
             </div>
 
