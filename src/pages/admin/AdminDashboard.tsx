@@ -595,7 +595,16 @@ const StaffTab = () => {
       setForm({ ...EMPTY_STAFF });
       await loadStaff();
       setTimeout(() => { setSubView("list"); setSuccess(""); }, 3000);
-    } catch (e: any) { setError(e.message); }
+    } catch (e: any) {
+      const raw = e.message || "Failed to create staff member";
+      // Convert technical errors to friendly messages
+      const friendly = raw.includes("already exists") ? "This email is already registered. Please use a different email address."
+        : raw.includes("valid enum") ? "Something went wrong with the role. Please refresh the page and try again."
+        : raw.includes("required") ? "Please fill in all required fields."
+        : raw.includes("PIN") ? "Please generate a 6-digit PIN before saving."
+        : raw;
+      setError(friendly);
+    }
     finally { setSub(false); }
   };
 
@@ -619,6 +628,15 @@ const StaffTab = () => {
           </Button>
           <Button variant={subView==="add"?"default":"outline"} size="sm" onClick={() => { setSubView("add"); setError(""); setSuccess(""); }} className="rounded-xl gap-1.5">
             <UserPlus className="w-3.5 h-3.5" /> Add
+          </Button>
+          <Button variant="ghost" size="sm" onClick={async () => {
+            try {
+              const r = await apiFetch("/admin/cleanup-orphans", { method: "DELETE" });
+              setSuccess(r.message);
+              await loadStaff();
+            } catch {}
+          }} className="rounded-xl gap-1.5 text-muted-foreground hover:text-destructive" title="Remove ghost accounts">
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
