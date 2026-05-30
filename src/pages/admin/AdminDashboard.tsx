@@ -540,13 +540,17 @@ const StaffTab = () => {
   const sigRef   = useRef<HTMLInputElement>(null);
   const roleInfo = STAFF_ROLE_LIST.find(r => r.key === activeRole)!;
 
-  const loadStaff = async () => {
+  const loadStaff = useCallback(async () => {
     setLoading(true);
-    setStaff([]);  // Clear immediately so old role's data doesn't show
+    setStaff([]);
     try { const res = await apiFetch(`/admin/staff/${activeRole}`); setStaff(res.staff || []); }
     catch {} finally { setLoading(false); }
-  };
-  useEffect(() => { loadStaff(); }, [activeRole]);
+  }, [activeRole]);
+
+  // On first load, clean up orphaned records then load staff
+  useEffect(() => {
+    apiFetch("/admin/cleanup-orphans", { method: "DELETE" }).catch(() => {}).finally(() => loadStaff());
+  }, [activeRole]);
 
   const set = (k: keyof StaffForm, v: any) => setForm(p => ({ ...p, [k]: v }));
 
