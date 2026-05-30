@@ -23,6 +23,7 @@ import {
   apiGetDoctorPerformance, apiGetPaymentBreakdown,
   apiGetWeeklyTrend, apiGetPeakHours, apiGetDeptGrowth,
   apiGetPending, apiGetAlerts,
+  apiChangeEmail,
 } from "@/lib/api";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 
@@ -930,6 +931,30 @@ const StaffTab = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+    {/* Success Modal */}
+    {success && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <motion.div initial={{ opacity:0, scale:.95 }} animate={{ opacity:1, scale:1 }}
+          className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-center">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+            <Check className="w-7 h-7 text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground text-lg">Staff Added!</h3>
+            <p className="text-sm text-muted-foreground mt-1">{success}</p>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); setSubView("list"); }}>
+              Done
+            </Button>
+            <Button className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); }}>
+              Add Another
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    )}
     </div>
   );
 };
@@ -1866,29 +1891,6 @@ const SalaryTab = ({ tier }: { tier: number }) => {
             ))
         }
       </div>
-    {/* Success Modal */}
-    {success && (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ opacity:0, scale:.95 }} animate={{ opacity:1, scale:1 }}
-          className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
-            <Check className="w-7 h-7 text-emerald-600" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground text-lg">Staff Added!</h3>
-            <p className="text-sm text-muted-foreground mt-1">{success}</p>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); setSubView("list"); }}>
-              Done
-            </Button>
-            <Button className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); }}>
-              Add Another
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-    )}
     </div>
   );
 };
@@ -2867,7 +2869,13 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab,     setActiveTab]     = useState<Tab>("overview");
   const [tier,          setTier]          = useState(0);
-  const [showChangePwd, setShowChangePwd] = useState(false);
+  const [showChangePwd,  setShowChangePwd]  = useState(false);
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [newEmail,        setNewEmail]        = useState("");
+  const [emailPassword,   setEmailPassword]   = useState("");
+  const [emailError,      setEmailError]      = useState("");
+  const [emailSuccess,    setEmailSuccess]    = useState("");
+  const [emailSaving,     setEmailSaving]     = useState(false);
 
   const storedUser = localStorage.getItem("cliniq_user");
   const adminName  = storedUser ? JSON.parse(storedUser).name : "Admin";

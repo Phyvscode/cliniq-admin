@@ -38,6 +38,9 @@ export const apiAdminLogin    = (email: string, password: string) =>
 export const apiChangePassword = (currentPassword: string, newPassword: string) =>
   request("/auth/change-password", { method: "PATCH", body: JSON.stringify({ currentPassword, newPassword }) });
 
+export const apiChangeEmail = (newEmail: string, password: string) =>
+  request("/auth/change-email", { method: "PATCH", body: JSON.stringify({ newEmail, password }) });
+
 // ── Tier ─────────────────────────────────────────────────────────────────────
 export const apiGetTier = ()                    => request("/tier");
 export const apiSetTier = (tier: 1|2|3, notes?: string) =>
