@@ -211,7 +211,10 @@ const StaffCard = ({ member, onDelete }: { member: any; onDelete: () => void }) 
   const handleDelete = async () => {
     if (!confirm(`Remove ${user.name} from the system? This cannot be undone.`)) return;
     setDeleting(true);
-    try { await apiDeleteStaff(user._id || user.id); onDelete(); }
+    // Use staff's own _id as the delete key — most reliable
+    const staffId = member._id || member.id;
+    if (!staffId) { alert('Could not find staff ID. Please refresh and try again.'); setDeleting(false); return; }
+    try { await apiDeleteStaff(staffId); onDelete(); }
     catch (e: any) { alert(e.message); }
     finally { setDeleting(false); }
   };
@@ -591,10 +594,9 @@ const StaffTab = () => {
       if (form.pdfFile)       fd.append("document",  form.pdfFile);
       if (form.signatureFile) fd.append("signature", form.signatureFile);
       const res = await apiCreateStaff(fd);
-      setSuccess(res.message);
-      setForm({ ...EMPTY_STAFF });
       await loadStaff();
-      setTimeout(() => { setSubView("list"); setSuccess(""); }, 3000);
+      setSuccess(res.message || "Staff member created successfully!");
+      setForm({ ...EMPTY_STAFF });
     } catch (e: any) {
       const raw = e.message || "Failed to create staff member";
       // Convert technical errors to friendly messages
@@ -686,7 +688,7 @@ const StaffTab = () => {
         {/* ── Add view ── */}
         {subView === "add" && (
           <motion.div key="add" initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} className="space-y-6">
-            {success && (
+            {false && (
               <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }}
                 className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
                 <Check className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
@@ -1864,6 +1866,29 @@ const SalaryTab = ({ tier }: { tier: number }) => {
             ))
         }
       </div>
+    {/* Success Modal */}
+    {success && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <motion.div initial={{ opacity:0, scale:.95 }} animate={{ opacity:1, scale:1 }}
+          className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-center">
+          <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+            <Check className="w-7 h-7 text-emerald-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground text-lg">Staff Added!</h3>
+            <p className="text-sm text-muted-foreground mt-1">{success}</p>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); setSubView("list"); }}>
+              Done
+            </Button>
+            <Button className="flex-1 h-11 rounded-xl" onClick={() => { setSuccess(""); }}>
+              Add Another
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    )}
     </div>
   );
 };
@@ -2934,6 +2959,55 @@ const AdminDashboard = () => {
       </div>
 
       <ChangePasswordModal open={showChangePwd} onClose={() => setShowChangePwd(false)} />
+
+      {/* Change Email Modal */}
+      {showChangeEmail && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div initial={{ opacity:0, scale:.95 }} animate={{ opacity:1, scale:1 }}
+            className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-foreground">Change Email</h2>
+              <button onClick={() => { setShowChangeEmail(false); setEmailError(""); setEmailSuccess(""); setNewEmail(""); setEmailPassword(""); }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {emailSuccess ? (
+              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl p-4">
+                <Check className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-medium">{emailSuccess}</p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">New Email Address</label>
+                  <Input type="email" placeholder="new@email.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="h-11 rounded-xl" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Current Password (to confirm)</label>
+                  <Input type="password" placeholder="Enter your password" value={emailPassword} onChange={e => setEmailPassword(e.target.value)} className="h-11 rounded-xl" />
+                </div>
+                {emailError && <p className="text-sm text-destructive">{emailError}</p>}
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => { setShowChangeEmail(false); setEmailError(""); setNewEmail(""); setEmailPassword(""); }} className="flex-1 h-11 rounded-xl">Cancel</Button>
+                  <Button disabled={emailSaving || !newEmail || !emailPassword} onClick={async () => {
+                    setEmailError(""); setEmailSaving(true);
+                    try {
+                      const r = await apiChangeEmail(newEmail, emailPassword);
+                      setEmailSuccess(r.message || "Email updated successfully!");
+                      setTimeout(() => { setShowChangeEmail(false); setEmailSuccess(""); setNewEmail(""); setEmailPassword(""); }, 2500);
+                    } catch (e: any) {
+                      setEmailError(e.message || "Failed to update email");
+                    } finally { setEmailSaving(false); }
+                  }} className="flex-1 h-11 rounded-xl">
+                    {emailSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Update Email"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
