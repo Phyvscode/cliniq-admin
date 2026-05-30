@@ -542,6 +542,7 @@ const StaffTab = () => {
 
   const loadStaff = async () => {
     setLoading(true);
+    setStaff([]);  // Clear immediately so old role's data doesn't show
     try { const res = await apiFetch(`/admin/staff/${activeRole}`); setStaff(res.staff || []); }
     catch {} finally { setLoading(false); }
   };
@@ -647,7 +648,7 @@ const StaffTab = () => {
       {/* Role selector — 3 columns */}
       <div className="grid grid-cols-3 gap-2 mb-6">
         {STAFF_ROLE_LIST.map(r => (
-          <button key={r.key} onClick={() => { setRole(r.key as StaffRoleKey); setSubView("list"); }}
+          <button key={r.key} onClick={() => { setRole(r.key as StaffRoleKey); setSubView("list"); setError(""); setSuccess(""); }}
             className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left ${
               activeRole === r.key
                 ? "border-primary bg-primary/5 text-primary"
