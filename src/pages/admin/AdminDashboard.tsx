@@ -547,10 +547,7 @@ const StaffTab = () => {
     catch {} finally { setLoading(false); }
   }, [activeRole]);
 
-  // On first load, clean up orphaned records then load staff
-  useEffect(() => {
-    apiFetch("/admin/cleanup-orphans", { method: "DELETE" }).catch(() => {}).finally(() => loadStaff());
-  }, [activeRole]);
+  useEffect(() => { loadStaff(); }, [activeRole]);
 
   const set = (k: keyof StaffForm, v: any) => setForm(p => ({ ...p, [k]: v }));
 
@@ -1544,14 +1541,7 @@ const SalaryTab = ({ tier }: { tier: number }) => {
     catch {} finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    if (tier >= 1) {
-      // Clean up ghost users before loading salary data
-      apiFetch("/admin/cleanup-orphans", { method: "DELETE" })
-        .catch(() => {})
-        .finally(() => load());
-    }
-  }, [tier]);
+  useEffect(() => { if (tier >= 1) load(); }, [tier]);
 
   if (tier < 1) return <LockedFeature label="Salary Management" minTier={1} />;
 
