@@ -9,7 +9,14 @@ import {
   CreditCard, Smartphone, BadgePercent, Star, AlertCircle,
   CheckCircle2, Lock, KeyRound, Filter, ArrowUpDown, PieChart,
   Bell, TrendingDown, Award, Clock as ClockIcon, Download, Users,
+  Bed, FlaskConical, Search as SearchIcon,
 } from "lucide-react";
+import { OverviewTab        } from "./tabs/OverviewTab";
+import { BedsTab            } from "./tabs/BedsTab";
+import { PharmacyAnalyticsTab } from "./tabs/PharmacyAnalyticsTab";
+import { LabTab             } from "./tabs/LabTab";
+import { ReportsTab         } from "./tabs/ReportsTab";
+import { PatientHistoryTab  } from "./tabs/PatientHistoryTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +63,8 @@ const apiDeleteMedicine = (id: string) => apiDeleteMed(id);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = "overview" | "staff"
-         | "revenue" | "analytics" | "enterprise" | "salary" | "transactions" | "settings";
+         | "revenue" | "analytics" | "enterprise" | "salary" | "transactions" | "settings"
+         | "beds" | "pharmacy" | "lab" | "reports" | "patients";
 type SubView = "list" | "add";
 
 interface StaffForm {
@@ -2640,89 +2648,7 @@ const SettingsTab = ({ tier, onTierChange }: { tier: number; onTierChange: (t: n
 };
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
-const OverviewTab = ({ setTab, tier }: { setTab: (t: Tab) => void; tier: number }) => {
-  const coreCards = [
-    { icon:Pill,        label:"Medicines",    desc:"Add & view medicines",       tab:"medicines"     as Tab, color:"text-blue-500",    bg:"bg-blue-500/10"    },
-    { icon:Users,       label:"Staff",          desc:"Add & manage all staff members", tab:"staff" as Tab, color:"text-blue-500", bg:"bg-blue-500/10" },
-  ];
-
-  const tier1Cards = [
-    { icon:IndianRupee, label:"Revenue",      desc:"View earnings & stats",    tab:"revenue"      as Tab, color:"text-amber-500",  bg:"bg-amber-500/10"  },
-    { icon:Wallet,      label:"Salary",       desc:"Configure doctor pay",     tab:"salary"       as Tab, color:"text-rose-500",   bg:"bg-rose-500/10"   },
-    { icon:BarChart3,   label:"Transactions", desc:"View payment history",     tab:"transactions" as Tab, color:"text-cyan-500",   bg:"bg-cyan-500/10"   },
-  ];
-
-  const tier2Cards = [
-    { icon:PieChart,   label:"Analytics",  desc:"Revenue graphs, department breakdown & doctor performance", tab:"analytics"  as Tab, color:"text-indigo-500", bg:"bg-indigo-500/10" },
-  ];
-
-  const tier3Cards = [
-    { icon:Building2,  label:"Enterprise", desc:"Smart alerts, weekly trends, peak hours & exports",         tab:"enterprise" as Tab, color:"text-violet-500", bg:"bg-violet-500/10" },
-  ];
-
-  const CardBtn = ({ card }: { card: typeof coreCards[0] }) => (
-    <motion.button onClick={() => setTab(card.tab)} whileTap={{ scale: 0.98 }}
-      className="w-full flex items-center gap-5 p-5 rounded-2xl border border-border bg-card hover:border-primary/30 hover:bg-primary/5 transition-all text-left group">
-      <div className={`w-12 h-12 rounded-2xl ${card.bg} flex items-center justify-center shrink-0`}>
-        <card.icon className={`w-6 h-6 ${card.color}`} />
-      </div>
-      <div className="flex-1">
-        <p className="font-semibold text-foreground">{card.label}</p>
-        <p className="text-sm text-muted-foreground">{card.desc}</p>
-      </div>
-      <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-    </motion.button>
-  );
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold text-foreground mb-1">Admin Controls</h2>
-      <p className="text-sm text-muted-foreground mb-6">Manage your clinic</p>
-
-      <div className="space-y-3 mb-6">
-        {coreCards.map(card => <CardBtn key={card.tab} card={card} />)}
-      </div>
-
-      {tier >= 1 && (
-        <>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Tier 1 Features</p>
-          <div className="space-y-3 mb-6">
-            {tier1Cards.map(card => <CardBtn key={card.tab} card={card} />)}
-          </div>
-        </>
-      )}
-
-      {tier >= 2 && (
-        <>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Tier 2 Features</p>
-          <div className="space-y-3 mb-6">
-            {tier2Cards.map(card => <CardBtn key={card.tab} card={card} />)}
-          </div>
-        </>
-      )}
-
-      {tier >= 3 && (
-        <>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Tier 3 Features</p>
-          <div className="space-y-3 mb-6">
-            {tier3Cards.map(card => <CardBtn key={card.tab} card={card} />)}
-          </div>
-        </>
-      )}
-
-      {tier === 0 && (
-        <div className="mt-4 border border-dashed border-border rounded-2xl p-5 text-center">
-          <Lock className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm font-medium text-foreground mb-0.5">Tier 1 features available</p>
-          <p className="text-xs text-muted-foreground mb-3">Enable a tier to unlock revenue tracking, salary management, and more.</p>
-          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setTab("settings")}>
-            Go to Settings
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
+// OverviewTab is imported from ./tabs/OverviewTab
 
 // ─── Admin Avatar Dropdown ────────────────────────────────────────────────────
 const AdminAvatarDropdown = ({
@@ -2893,14 +2819,19 @@ const AdminDashboard = () => {
   };
 
   const tabs = [
-    { key: "overview"      as Tab, label:"Overview",      icon: Activity    },
-    { key: "staff"         as Tab, label:"Staff",          icon: Users       },
-    { key: "revenue"       as Tab, label:"Revenue",       icon: IndianRupee },
+    { key: "overview"      as Tab, label:"Overview",        icon: Activity    },
+    { key: "staff"         as Tab, label:"Staff",           icon: Users       },
+    { key: "revenue"       as Tab, label:"Revenue",         icon: IndianRupee },
     ...(tier >= 2 ? [{ key: "analytics"  as Tab, label: "Analytics",  icon: PieChart   }] : []),
     ...(tier >= 3 ? [{ key: "enterprise" as Tab, label: "Enterprise", icon: Building2  }] : []),
-    { key: "salary"        as Tab, label:"Salary",        icon: Wallet      },
-    { key: "transactions"  as Tab, label:"Transactions",  icon: BarChart3   },
-    { key: "settings"      as Tab, label:"Settings",      icon: Shield      },
+    { key: "salary"        as Tab, label:"Salary",          icon: Wallet      },
+    { key: "transactions"  as Tab, label:"Transactions",    icon: BarChart3   },
+    { key: "beds"          as Tab, label:"Beds / IPD",      icon: Bed         },
+    { key: "pharmacy"      as Tab, label:"Pharmacy",        icon: Pill        },
+    { key: "lab"           as Tab, label:"Laboratory",      icon: FlaskConical},
+    { key: "reports"       as Tab, label:"Reports",         icon: FileText    },
+    { key: "patients"      as Tab, label:"Patient History", icon: SearchIcon  },
+    { key: "settings"      as Tab, label:"Settings",        icon: Shield      },
   ];
 
   return (
@@ -2955,14 +2886,19 @@ const AdminDashboard = () => {
         <main className="flex-1 overflow-y-auto p-8">
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-              {activeTab === "overview"      && <OverviewTab      setTab={setActiveTab} tier={tier} />}
+              {activeTab === "overview"      && <OverviewTab         setTab={setActiveTab} />}
               {activeTab === "staff"         && <StaffTab />}
-              {activeTab === "revenue"       && <RevenueTab       tier={tier} />}
-              {activeTab === "analytics"     && <AnalyticsTab     tier={tier} />}
-              {activeTab === "enterprise"    && <Tier3Tab         tier={tier} />}
-              {activeTab === "salary"        && <SalaryTab        tier={tier} />}
-              {activeTab === "transactions"  && <TransactionsTab  tier={tier} />}
-              {activeTab === "settings"      && <SettingsTab      tier={tier} onTierChange={t => { setTier(t); setActiveTab("overview"); }} />}
+              {activeTab === "revenue"       && <RevenueTab         tier={tier} />}
+              {activeTab === "analytics"     && <AnalyticsTab       tier={tier} />}
+              {activeTab === "enterprise"    && <Tier3Tab           tier={tier} />}
+              {activeTab === "salary"        && <SalaryTab          tier={tier} />}
+              {activeTab === "transactions"  && <TransactionsTab    tier={tier} />}
+              {activeTab === "beds"          && <BedsTab />}
+              {activeTab === "pharmacy"      && <PharmacyAnalyticsTab />}
+              {activeTab === "lab"           && <LabTab />}
+              {activeTab === "reports"       && <ReportsTab />}
+              {activeTab === "patients"      && <PatientHistoryTab />}
+              {activeTab === "settings"      && <SettingsTab        tier={tier} onTierChange={t => { setTier(t); setActiveTab("overview"); }} />}
             </motion.div>
           </AnimatePresence>
         </main>
