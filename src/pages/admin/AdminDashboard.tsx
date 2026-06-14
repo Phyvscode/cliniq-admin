@@ -2886,7 +2886,7 @@ const AdminDashboard = () => {
         <main className="flex-1 overflow-y-auto p-8">
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-              {activeTab === "overview"      && <OverviewTab         setTab={setActiveTab} />}
+              {activeTab === "overview"      && <OverviewTab         setTab={(t) => setActiveTab(t as Tab)} />}
               {activeTab === "staff"         && <StaffTab />}
               {activeTab === "revenue"       && <RevenueTab         tier={tier} />}
               {activeTab === "analytics"     && <AnalyticsTab       tier={tier} />}
