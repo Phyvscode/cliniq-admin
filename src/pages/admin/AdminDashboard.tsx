@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
-  apiAddMedicine, apiDeleteMedicine as apiDeleteMed,
   apiGetRevenueStats, apiGetDoctorRevStats, apiGetAllStaffStats, apiGetTransactions,
   apiUpsertSalaryConfig, apiDeleteSalaryConfig,
   apiGetTier, apiSetTier,
@@ -59,8 +58,6 @@ const apiCreateStaff = async (formData: FormData) => {
 };
 
 const apiDeleteStaff    = (userId: string) => apiFetch(`/admin/staff/${userId}`, { method: "DELETE" });
-const apiDeleteMedicine = (id: string) => apiDeleteMed(id);
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = "overview" | "staff"
          | "revenue" | "analytics" | "enterprise" | "salary" | "transactions" | "settings"
@@ -146,8 +143,6 @@ const DEPARTMENTS     = [
   "General Medicine","Pediatrics","Gynecology","Orthopedics",
   "Dermatology","ENT","Cardiology","Neurology","Ophthalmology","Dentistry",
 ];
-const MEDICINE_TYPES  = ["Tablet","Capsule","Syrup","Injection","Cream","Drops","Inhaler","Patch","Other"];
-
 const METHOD_ICON: Record<string, React.ElementType> = {
   cash: Banknote, card: CreditCard, upi: Smartphone, insurance: Shield, other: Wallet,
 };
@@ -381,141 +376,6 @@ const StaffCard = ({ member, onDelete }: { member: any; onDelete: () => void }) 
         )}
       </AnimatePresence>
     </motion.div>
-  );
-};
-
-// ─── Medicines Tab ────────────────────────────────────────────────────────────
-const MedicinesTab = () => {
-  const [subView,   setSubView]   = useState<SubView>("list");
-  const [medicines, setMedicines] = useState<any[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [name,      setName]      = useState("");
-  const [type,      setType]      = useState("");
-  const [error,     setError]     = useState("");
-  const [success,   setSuccess]   = useState("");
-  const [adding,    setAdding]    = useState(false);
-
-  const fetchMedicines = async () => {
-    setLoading(true);
-    try { const res = await apiFetch("/medicines"); setMedicines(res.medicines || []); }
-    catch {} finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchMedicines(); }, []);
-
-  const handleAdd = async () => {
-    if (!name.trim() || !type) { setError("Both name and type are required."); return; }
-    setError(""); setAdding(true);
-    try {
-      await apiAddMedicine({ name: name.trim(), type });
-      setName(""); setType("");
-      setSuccess("Medicine added!"); setTimeout(() => setSuccess(""), 3000);
-      await fetchMedicines(); setSubView("list");
-    } catch (err: any) { setError(err.message || "Failed"); }
-    finally { setAdding(false); }
-  };
-
-  const handleDelete = async (id: string, mName: string) => {
-    if (!confirm(`Delete "${mName}"?`)) return;
-    try { await apiDeleteMedicine(id); await fetchMedicines(); }
-    catch (e: any) { alert(e.message); }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Medicines</h2>
-          <p className="text-sm text-muted-foreground">{medicines.length} medicines available</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant={subView==="list"?"default":"outline"} size="sm" onClick={() => setSubView("list")} className="rounded-xl gap-1.5">
-            <List className="w-3.5 h-3.5" /> View All
-          </Button>
-          <Button variant={subView==="add"?"default":"outline"} size="sm" onClick={() => setSubView("add")} className="rounded-xl gap-1.5">
-            <Plus className="w-3.5 h-3.5" /> Add New
-          </Button>
-        </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {subView === "list" && (
-          <motion.div key="list" initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-            {success && (
-              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 mb-4">
-                <Check className="w-4 h-4 text-emerald-500" />
-                <p className="text-sm text-emerald-700 dark:text-emerald-300">{success}</p>
-              </div>
-            )}
-            {loading ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <RefreshCw className="w-8 h-8 mx-auto mb-3 animate-spin opacity-40" />
-                <p className="text-sm">Loading medicines...</p>
-              </div>
-            ) : medicines.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Pill className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No medicines yet</p>
-                <p className="text-sm">Click "Add New" to add the first medicine</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {medicines.map((med, i) => (
-                  <motion.div key={med._id} initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Pill className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{med.name}</p>
-                      <p className="text-xs text-muted-foreground">{med.type}</p>
-                    </div>
-                    <button onClick={() => handleDelete(med._id, med.name)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {subView === "add" && (
-          <motion.div key="add" initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-            className="bg-card border border-border rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Add New Medicine</h3>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Name</label>
-                <Input placeholder="e.g. Paracetamol" value={name} onChange={e => setName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleAdd()} className="h-11 rounded-xl" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Type</label>
-                <div className="relative">
-                  <select value={type} onChange={e => setType(e.target.value)}
-                    className="w-full h-11 rounded-xl border border-border bg-background text-foreground px-3 pr-9 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="">Select type...</option>
-                    {MEDICINE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-            </div>
-            {error && <p className="text-sm text-destructive mb-3">{error}</p>}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setSubView("list")} className="flex-1 h-11 rounded-xl">Cancel</Button>
-              <Button onClick={handleAdd} disabled={adding} className="flex-1 h-11 rounded-xl gap-2">
-                {adding ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {adding ? "Adding..." : "Add Medicine"}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
   );
 };
 
