@@ -28,6 +28,8 @@ import FollowupsPage from "./FollowupsPage";
 import IPDPage from "./IPDPage";
 import PharmacyPage from "./PharmacyPage";
 import LaboratoryPage from "./LaboratoryPage";
+import ReportsPage from "./ReportsPage";
+import StaffPage from "./StaffPage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -2719,6 +2721,8 @@ const AdminDashboard = () => {
     if (activePage === "followups") return <FollowupsPage />;
     if (activePage === "pharmacy")  return <PharmacyPage />;
     if (activePage === "lab")       return <LaboratoryPage />;
+    if (activePage === "reports")   return <ReportsPage />;
+    if (activePage === "staff")     return <StaffPage />;
 
     // Legacy tabs wrapped in the old white-card layout
     return (
