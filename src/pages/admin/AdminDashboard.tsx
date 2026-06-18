@@ -141,7 +141,7 @@ const SPECIALIZATIONS = [
 const QUALIFICATIONS  = ["MBBS","MD","MS","BDS","MDS","DNB","DM","MCh","FRCS","Other"];
 const DEPARTMENTS     = [
   "General Medicine","Pediatrics","Gynecology","Orthopedics",
-  "Dermatology","ENT","Cardiology","Neurology","Ophthalmology","Dentistry",
+  "Dermatology","ENT","Cardiology","Ophthalmology","Psychiatry","Pulmonology",
 ];
 const METHOD_ICON: Record<string, React.ElementType> = {
   cash: Banknote, card: CreditCard, upi: Smartphone, insurance: Shield, other: Wallet,
