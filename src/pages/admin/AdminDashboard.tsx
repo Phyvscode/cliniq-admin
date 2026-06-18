@@ -20,6 +20,10 @@ import { PatientHistoryTab  } from "./tabs/PatientHistoryTab";
 import AdminSidebar, { AdminPage } from "@/components/AdminSidebar";
 import CommandCenter from "./CommandCenter";
 import RevenuePage from "./RevenuePage";
+import DepartmentsPage from "./DepartmentsPage";
+import DoctorsPage from "./DoctorsPage";
+import PatientsPage from "./PatientsPage";
+import BedManagementPage from "./BedManagementPage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -2703,6 +2707,10 @@ const AdminDashboard = () => {
   const renderContent = () => {
     if (activePage === "command-center") return <CommandCenter />;
     if (activePage === "revenue")        return <RevenuePage />;
+    if (activePage === "departments")    return <DepartmentsPage />;
+    if (activePage === "doctors")        return <DoctorsPage />;
+    if (activePage === "patients")       return <PatientsPage />;
+    if (activePage === "beds" || activePage === "ipd") return <BedManagementPage />;
 
     // Legacy tabs wrapped in the old white-card layout
     return (
@@ -2715,11 +2723,9 @@ const AdminDashboard = () => {
               {activeTab === "analytics"     && <AnalyticsTab       tier={tier} />}
               {activeTab === "salary"        && <SalaryTab          tier={tier} />}
               {activeTab === "transactions"  && <TransactionsTab    tier={tier} />}
-              {activeTab === "beds"          && <BedsTab />}
               {activeTab === "pharmacy"      && <PharmacyAnalyticsTab />}
               {activeTab === "lab"           && <LabTab />}
               {activeTab === "reports"       && <ReportsTab />}
-              {activeTab === "patients"      && <PatientHistoryTab />}
               {activeTab === "settings"      && <SettingsTab        tier={tier} onTierChange={t => { setTier(t); setActivePage("command-center"); }} />}
             </motion.div>
           </AnimatePresence>
