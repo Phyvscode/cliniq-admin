@@ -8,7 +8,6 @@ dist-ssr/
 # Environment variables — never commit real values
 .env
 .env.local
-.env.production
 
 # Logs
 *.log
