@@ -17,6 +17,9 @@ import { PharmacyAnalyticsTab } from "./tabs/PharmacyAnalyticsTab";
 import { LabTab             } from "./tabs/LabTab";
 import { ReportsTab         } from "./tabs/ReportsTab";
 import { PatientHistoryTab  } from "./tabs/PatientHistoryTab";
+import AdminSidebar, { AdminPage } from "@/components/AdminSidebar";
+import CommandCenter from "./CommandCenter";
+import RevenuePage from "./RevenuePage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -2655,6 +2658,7 @@ const AdminAvatarDropdown = ({
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [activePage,    setActivePage]    = useState<AdminPage>("command-center");
   const [activeTab,     setActiveTab]     = useState<Tab>("overview");
   const [tier,          setTier]          = useState(0);
   const [showChangePwd,  setShowChangePwd]  = useState(false);
@@ -2678,79 +2682,37 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
-  const tabs = [
-    { key: "overview"      as Tab, label:"Overview",        icon: Activity    },
-    { key: "staff"         as Tab, label:"Staff",           icon: Users       },
-    { key: "revenue"       as Tab, label:"Revenue",         icon: IndianRupee },
-    ...(tier >= 2 ? [{ key: "analytics"  as Tab, label: "Analytics",  icon: PieChart   }] : []),
-    ...(tier >= 3 ? [{ key: "enterprise" as Tab, label: "Enterprise", icon: Building2  }] : []),
-    { key: "salary"        as Tab, label:"Salary",          icon: Wallet      },
-    { key: "transactions"  as Tab, label:"Transactions",    icon: BarChart3   },
-    { key: "beds"          as Tab, label:"Beds / IPD",      icon: Bed         },
-    { key: "pharmacy"      as Tab, label:"Pharmacy",        icon: Pill        },
-    { key: "lab"           as Tab, label:"Laboratory",      icon: FlaskConical},
-    { key: "reports"       as Tab, label:"Reports",         icon: FileText    },
-    { key: "patients"      as Tab, label:"Patient History", icon: SearchIcon  },
-    { key: "settings"      as Tab, label:"Settings",        icon: Shield      },
-  ];
+  // Map AdminPage → legacy Tab for sections not yet redesigned
+  const handleNavigate = (page: AdminPage) => {
+    setActivePage(page);
+    const legacyMap: Partial<Record<AdminPage, Tab>> = {
+      doctors:  "staff",
+      patients: "patients",
+      ipd:      "beds",
+      beds:     "beds",
+      pharmacy: "pharmacy",
+      lab:      "lab",
+      reports:  "reports",
+      followups:"overview",
+      staff:    "staff",
+      departments: "analytics",
+    };
+    if (legacyMap[page]) setActiveTab(legacyMap[page]!);
+  };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card px-6 py-3 flex items-center gap-4">
-        <AdminAvatarDropdown
-          adminName={adminName}
-          tier={tier}
-          onChangePassword={() => setShowChangePwd(true)}
-          onSettings={() => setActiveTab("settings")}
-          onLogout={handleLogout}
-        />
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-foreground">{adminName}</h1>
-            {tier > 0
-              ? <Badge variant="secondary" className="text-xs">Tier {tier}</Badge>
-              : <Badge variant="outline"   className="text-xs text-muted-foreground">No Tier</Badge>
-            }
-          </div>
-          <p className="text-xs text-muted-foreground">Admin · ClinIQ</p>
-        </div>
-      </header>
+  const renderContent = () => {
+    if (activePage === "command-center") return <CommandCenter />;
+    if (activePage === "revenue")        return <RevenuePage />;
 
-      {/* Body: vertical sidebar + content */}
-      <div className="flex h-[calc(100vh-57px)]">
-
-        {/* Left sidebar tabs */}
-        <aside className="w-52 border-r border-border bg-card flex flex-col py-3 shrink-0 overflow-y-auto">
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all text-left rounded-none relative ${
-                activeTab === t.key
-                  ? "text-primary bg-primary/5"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}>
-              {/* Active indicator bar */}
-              {activeTab === t.key && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute left-0 top-1 bottom-1 w-0.5 bg-primary rounded-r-full"
-                />
-              )}
-              <t.icon className={`w-4 h-4 shrink-0 ${activeTab === t.key ? "text-primary" : ""}`} />
-              <span>{t.label}</span>
-            </button>
-          ))}
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-8">
+    // Legacy tabs wrapped in the old white-card layout
+    return (
+      <div className="flex-1 overflow-y-auto bg-[#f8f9fc]">
+        <div className="p-8">
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
               {activeTab === "overview"      && <OverviewTab         setTab={(t) => setActiveTab(t as Tab)} />}
               {activeTab === "staff"         && <StaffTab />}
-              {activeTab === "revenue"       && <RevenueTab         tier={tier} />}
               {activeTab === "analytics"     && <AnalyticsTab       tier={tier} />}
-              {activeTab === "enterprise"    && <Tier3Tab           tier={tier} />}
               {activeTab === "salary"        && <SalaryTab          tier={tier} />}
               {activeTab === "transactions"  && <TransactionsTab    tier={tier} />}
               {activeTab === "beds"          && <BedsTab />}
@@ -2758,11 +2720,25 @@ const AdminDashboard = () => {
               {activeTab === "lab"           && <LabTab />}
               {activeTab === "reports"       && <ReportsTab />}
               {activeTab === "patients"      && <PatientHistoryTab />}
-              {activeTab === "settings"      && <SettingsTab        tier={tier} onTierChange={t => { setTier(t); setActiveTab("overview"); }} />}
+              {activeTab === "settings"      && <SettingsTab        tier={tier} onTierChange={t => { setTier(t); setActivePage("command-center"); }} />}
             </motion.div>
           </AnimatePresence>
-        </main>
+        </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <AdminSidebar
+        active={activePage}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        userName={adminName}
+        userRole="Executive Owner"
+      />
+
+      {renderContent()}
 
       <ChangePasswordModal open={showChangePwd} onClose={() => setShowChangePwd(false)} />
 
