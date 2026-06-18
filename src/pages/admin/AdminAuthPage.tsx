@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input }  from "@/components/ui/input";
+import { Eye, EyeOff, Lock, Mail, Activity } from "lucide-react";
 import { apiAdminLogin } from "@/lib/api";
 
 const AdminAuthPage = () => {
@@ -29,71 +27,150 @@ const AdminAuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-sm"
-      >
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Shield className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex bg-[#0f1623]">
+      {/* Left panel — branding */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 p-10 border-r border-white/5">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm">C</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">ClinIQ Admin</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Sign in to manage your clinic</p>
+          <div className="flex items-center gap-2">
+            <span className="text-white font-semibold text-base">ClinIQ</span>
+            <span className="text-[10px] font-semibold bg-white/10 text-white/60 px-1.5 py-0.5 rounded">ADMIN</span>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="email" placeholder="admin@clinic.com"
-                value={email} onChange={e => setEmail(e.target.value)}
-                className="pl-9 h-12 rounded-xl"
-                autoComplete="email"
-              />
+        {/* Center text */}
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/20 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-blue-400" />
             </div>
+            <span className="text-white/40 text-xs font-medium uppercase tracking-widest">Command Center</span>
+          </div>
+          <h2 className="text-3xl font-bold text-white leading-tight">
+            Manage your clinic<br />with full visibility.
+          </h2>
+          <p className="text-white/40 text-sm mt-4 leading-relaxed">
+            Revenue analytics, patient flow, staff management, pharmacy and lab intelligence — all in one place.
+          </p>
+
+          {/* Feature list */}
+          <div className="mt-8 space-y-3">
+            {[
+              "Real-time revenue & department analytics",
+              "Doctor leaderboard & performance tracking",
+              "IPD / Bed management & follow-ups",
+              "Pharmacy & lab command center",
+            ].map(f => (
+              <div key={f} className="flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                <p className="text-white/50 text-sm">{f}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-white/20 text-xs">ClinIQ Admin Portal · v2.0</p>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-sm"
+        >
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">C</span>
+            </div>
+            <span className="text-white font-semibold text-base">ClinIQ</span>
+            <span className="text-[10px] font-semibold bg-white/10 text-white/60 px-1.5 py-0.5 rounded">ADMIN</span>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type={showPwd ? "text" : "password"} placeholder="Password"
-                value={password} onChange={e => setPassword(e.target.value)}
-                className="pl-9 pr-10 h-12 rounded-xl"
-                autoComplete="current-password"
-              />
-              <button type="button" onClick={() => setShowPwd(!showPwd)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-white tracking-tight">Sign in</h1>
+            <p className="text-white/40 mt-1.5 text-sm">Enter your admin credentials to continue.</p>
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive text-center bg-destructive/10 rounded-xl py-2 px-4">
-              {error}
-            </p>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2 block">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                <input
+                  type="email"
+                  placeholder="admin@clinic.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  autoComplete="email"
+                  className="w-full pl-10 pr-4 h-12 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+            </div>
 
-          <Button type="submit" disabled={loading} className="w-full h-12 text-base font-medium rounded-xl" size="lg">
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
+            {/* Password */}
+            <div>
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2 block">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                <input
+                  type={showPwd ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="w-full pl-10 pr-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
+                >
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          ClinIQ Admin Portal · v1.0
-        </p>
-      </motion.div>
+            {/* Error */}
+            {error && (
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Signing in…
+                </>
+              ) : "Sign In"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-white/20 mt-8">
+            Authorized personnel only · ClinIQ {new Date().getFullYear()}
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 };
