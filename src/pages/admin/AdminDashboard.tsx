@@ -24,6 +24,10 @@ import DepartmentsPage from "./DepartmentsPage";
 import DoctorsPage from "./DoctorsPage";
 import PatientsPage from "./PatientsPage";
 import BedManagementPage from "./BedManagementPage";
+import FollowupsPage from "./FollowupsPage";
+import IPDPage from "./IPDPage";
+import PharmacyPage from "./PharmacyPage";
+import LaboratoryPage from "./LaboratoryPage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -2710,7 +2714,11 @@ const AdminDashboard = () => {
     if (activePage === "departments")    return <DepartmentsPage />;
     if (activePage === "doctors")        return <DoctorsPage />;
     if (activePage === "patients")       return <PatientsPage />;
-    if (activePage === "beds" || activePage === "ipd") return <BedManagementPage />;
+    if (activePage === "beds")      return <BedManagementPage />;
+    if (activePage === "ipd")       return <IPDPage />;
+    if (activePage === "followups") return <FollowupsPage />;
+    if (activePage === "pharmacy")  return <PharmacyPage />;
+    if (activePage === "lab")       return <LaboratoryPage />;
 
     // Legacy tabs wrapped in the old white-card layout
     return (
