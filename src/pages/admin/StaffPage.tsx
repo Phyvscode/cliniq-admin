@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, Download, Printer, FileSpreadsheet, Plus, Search } from "lucide-react";
-import { apiGetAllStaff } from "@/lib/api";
+import { RefreshCw, Download, Printer, FileSpreadsheet, Plus, Search, X, Check } from "lucide-react";
+import { apiGetAllStaff, apiCreateStaff } from "@/lib/api";
 
 interface StaffMember {
   _id:            string;
@@ -26,22 +26,156 @@ const ROLE_FILTERS = ["All", "Doctor", "Nurse", "Receptionist", "Pharmacist", "L
 const ROLE_LABELS: Record<string, string> = {
   doctor:        "Doctor",
   nurse:         "Nurse",
+  reception:     "Receptionist",
   receptionist:  "Receptionist",
   pharmacist:    "Pharmacist",
+  lab_staff:     "Lab Technician",
   "lab-tech":    "Lab Technician",
   security:      "Security",
   housekeeping:  "Housekeeping",
   admin:         "Admin",
 };
 
+const ADD_ROLES = [
+  { value: "doctor",      label: "Doctor"        },
+  { value: "reception",   label: "Receptionist"  },
+  { value: "pharmacist",  label: "Pharmacist"    },
+  { value: "lab_staff",   label: "Lab Technician"},
+  { value: "nurse",       label: "Nurse"         },
+  { value: "housekeeping",label: "Housekeeping"  },
+];
+
+interface AddStaffForm {
+  name:        string;
+  email:       string;
+  pin:         string;
+  role:        string;
+  gender:      string;
+  dateOfBirth: string;
+  department:  string;
+}
+
+const EMPTY_FORM: AddStaffForm = {
+  name: "", email: "", pin: "", role: "reception",
+  gender: "", dateOfBirth: "", department: "",
+};
+
+function AddStaffModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form,      setForm]      = useState<AddStaffForm>(EMPTY_FORM);
+  const [saving,    setSaving]    = useState(false);
+  const [error,     setError]     = useState("");
+  const [success,   setSuccess]   = useState("");
+
+  const maxDate = new Date().toISOString().split("T")[0];
+  const minDate = `${new Date().getFullYear() - 80}-01-01`;
+
+  const set = (k: keyof AddStaffForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(form.pin)) { setError("PIN must be exactly 6 digits."); return; }
+    setSaving(true); setError("");
+    try {
+      const fd = new FormData();
+      (Object.keys(form) as (keyof AddStaffForm)[]).forEach(k => {
+        if (form[k]) fd.append(k, form[k]);
+      });
+      await apiCreateStaff(fd);
+      setSuccess(`${form.name} added successfully!`);
+      setTimeout(() => { onCreated(); onClose(); }, 1200);
+    } catch (e: any) { setError(e.message || "Failed to create staff"); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md p-6 relative">
+        <button onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100">
+          <X className="w-4 h-4" />
+        </button>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Add Staff Member</h2>
+        <p className="text-sm text-gray-400 mb-5">Create a PIN-based login for a new staff member.</p>
+
+        {success ? (
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+            <Check className="w-4 h-4 text-emerald-500" />
+            <p className="text-sm text-emerald-700 font-medium">{success}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Full Name *</label>
+                <input required value={form.name} onChange={set("name")} placeholder="e.g. Priya Sharma"
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Email *</label>
+                <input required type="email" value={form.email} onChange={set("email")} placeholder="staff@clinic.com"
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">6-Digit PIN *</label>
+                <input required type="password" inputMode="numeric" maxLength={6} value={form.pin} onChange={set("pin")} placeholder="••••••"
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Role *</label>
+                <select required value={form.role} onChange={set("role")}
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white">
+                  {ADD_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Gender *</label>
+                <select required value={form.gender} onChange={set("gender")}
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white">
+                  <option value="">Select…</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Date of Birth *</label>
+                <input required type="date" value={form.dateOfBirth} onChange={set("dateOfBirth")} min={minDate} max={maxDate}
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-500 mb-1 block">Department (optional)</label>
+                <input value={form.department} onChange={set("department")} placeholder="e.g. Pathology, Radiology"
+                  className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400" />
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={onClose}
+                className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={saving}
+                className="flex-1 h-10 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors disabled:opacity-40">
+                {saving ? "Adding…" : "Add Staff"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const fmtDate = (s?: string) =>
   s ? new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "numeric", year: "numeric" }) : "—";
 
 export default function StaffPage() {
-  const [staff,   setStaff]   = useState<StaffMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter,  setFilter]  = useState("All");
-  const [search,  setSearch]  = useState("");
+  const [staff,      setStaff]      = useState<StaffMember[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filter,     setFilter]     = useState("All");
+  const [search,     setSearch]     = useState("");
+  const [showAdd,    setShowAdd]    = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -98,7 +232,7 @@ export default function StaffPage() {
           <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
             <Download className="w-4 h-4" /> PDF
           </button>
-          <button className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
             <Plus className="w-4 h-4" /> Add Staff
           </button>
         </div>
@@ -187,6 +321,8 @@ export default function StaffPage() {
           </table>
         </div>
       </div>
+
+      {showAdd && <AddStaffModal onClose={() => setShowAdd(false)} onCreated={load} />}
     </div>
   );
 }
