@@ -111,3 +111,9 @@ export const apiUpsertSalaryConfig = (doctorId: string, body: {
 }) => request(`/salary/config/${doctorId}`, { method: "POST", body: JSON.stringify(body) });
 export const apiDeleteSalaryConfig = (doctorId: string) =>
   request(`/salary/config/${doctorId}`, { method: "DELETE" });
+
+// ── Beds ──────────────────────────────────────────────────────────────────────
+export const apiGetBeds    = ()                                  => request("/beds");
+export const apiCreateBed  = (body: { floor: string; bedNumber: string }) =>
+  request("/beds", { method: "POST", body: JSON.stringify(body) });
+export const apiDeleteBed  = (id: string)                        => request(`/beds/${id}`, { method: "DELETE" });
