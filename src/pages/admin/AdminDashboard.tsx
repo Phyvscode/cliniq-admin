@@ -2720,6 +2720,7 @@ const AdminDashboard = () => {
       followups:"overview",
       staff:    "staff",
       departments: "analytics",
+      settings: "settings",
     };
     if (legacyMap[page]) setActiveTab(legacyMap[page]!);
   };

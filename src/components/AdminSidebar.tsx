@@ -2,13 +2,13 @@ import {
   LayoutDashboard, TrendingUp, Building2,
   Stethoscope, Users, BedDouble, FlaskConical,
   Pill, CalendarClock, UserCog, FileBarChart2,
-  ClipboardList, LogOut,
+  ClipboardList, LogOut, Shield,
 } from "lucide-react";
 
 export type AdminPage =
   | "command-center" | "revenue" | "departments"
   | "doctors" | "patients" | "ipd" | "beds"
-  | "pharmacy" | "lab" | "followups" | "staff" | "reports";
+  | "pharmacy" | "lab" | "followups" | "staff" | "reports" | "settings";
 
 interface NavItem { label: string; page: AdminPage; icon: React.ElementType; }
 
@@ -38,6 +38,7 @@ const SECTIONS: { heading: string; items: NavItem[] }[] = [
       { label: "Follow-ups", page: "followups", icon: CalendarClock },
       { label: "Staff",      page: "staff",     icon: UserCog       },
       { label: "Reports",    page: "reports",   icon: FileBarChart2 },
+      { label: "Settings",   page: "settings",  icon: Shield        },
     ],
   },
 ];
