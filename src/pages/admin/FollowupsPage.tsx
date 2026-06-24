@@ -52,11 +52,12 @@ export default function FollowupsPage() {
       const today    = todayISO();
       const tomorrow = addDays(today, 1);
 
+      // Only prescriptions where the doctor actually set a follow-up date count —
+      // not every prescription with medicines (that previously flooded this page).
       const built: FuRow[] = prescriptions
-        .filter((p: any) => p.medicines?.length > 0)
+        .filter((p: any) => !!p.followUpDate)
         .map((p: any): FuRow => {
-          const maxDays = Math.max(...(p.medicines as any[]).map((m: any) => m.durationDays || 7));
-          const dueDate = addDays(p.date || today, maxDays);
+          const dueDate = p.followUpDate;
           let dueLbl: FuRow["dueLbl"] = "Upcoming";
           if (dueDate < today)        dueLbl = "Overdue";
           else if (dueDate === today)  dueLbl = "Today";

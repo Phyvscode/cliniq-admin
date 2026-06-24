@@ -1,21 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, RefreshCw, Download, Printer, FileSpreadsheet } from "lucide-react";
-import { apiGetTransactions } from "@/lib/api";
+import { apiGetQueueHistory } from "@/lib/api";
 
-interface Payment {
-  _id:     string;
-  patient: { name: string; phone: string; gender?: string; age?: number; permanentCode?: string } | null;
-  doctor:  { name: string } | null;
-  amount:  number;
-  method?: string;
-  type?:   string;
-  date:    string;
+interface VisitEntry {
+  _id:       string;
+  patient:   { name: string; phone: string; gender?: string; age?: number; permanentCode?: string } | null;
+  doctor:    { name: string } | null;
+  department?: string;
+  date:      string;
+  visitType: "new" | "existing";
+  payment:   { amount: number; method?: string; type?: string } | null;
 }
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const toISO = (d: Date) => d.toISOString().slice(0, 10);
+const todayISO = () => toISO(new Date());
 const todayDisplay = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 type DateRange = "today" | "yesterday" | "7days" | "30days" | "month";
@@ -25,36 +26,32 @@ const METHOD_LABEL: Record<string, string> = {
 };
 
 export default function PatientsPage() {
-  const [rows,      setRows]      = useState<Payment[]>([]);
+  const [rows,      setRows]      = useState<VisitEntry[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [search,    setSearch]    = useState("");
   const [range,     setRange]     = useState<DateRange>("today");
-  const [page,      setPage]      = useState(1);
-  const [total,     setTotal]     = useState(0);
-  const LIMIT = 50;
 
-  const dateParam = useCallback(() => {
-    const d = new Date();
-    if (range === "today")     return todayISO();
-    if (range === "yesterday") { d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); }
-    return undefined;
+  const dateParams = useCallback((): { date: string; to: string } => {
+    const today = new Date();
+    if (range === "today")     return { date: todayISO(), to: todayISO() };
+    if (range === "yesterday") { const d = new Date(today); d.setDate(d.getDate() - 1); return { date: toISO(d), to: toISO(d) }; }
+    if (range === "7days")     { const d = new Date(today); d.setDate(d.getDate() - 6); return { date: toISO(d), to: todayISO() }; }
+    if (range === "30days")    { const d = new Date(today); d.setDate(d.getDate() - 29); return { date: toISO(d), to: todayISO() }; }
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { date: toISO(monthStart), to: todayISO() };
   }, [range]);
 
-  const load = useCallback(async (p = 1) => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page: p, limit: LIMIT };
-      const dp = dateParam();
-      if (dp) params.date = dp;
-      const d = await apiGetTransactions(params);
-      setRows(d.payments || []);
-      setTotal(d.total || 0);
-      setPage(p);
+      const { date, to } = dateParams();
+      const d = await apiGetQueueHistory({ date, to });
+      setRows(d.entries || []);
     } catch {}
     setLoading(false);
-  }, [dateParam]);
+  }, [dateParams]);
 
-  useEffect(() => { load(1); }, [range, load]);
+  useEffect(() => { load(); }, [range, load]);
 
   const filtered = search.trim()
     ? rows.filter(r => {
@@ -67,8 +64,8 @@ export default function PatientsPage() {
       })
     : rows;
 
-  const newCount      = rows.filter(r => r.type === "consultation").length;
-  const existingCount = rows.filter(r => r.type === "follow-up").length;
+  const newCount      = rows.filter(r => r.visitType === "new").length;
+  const existingCount = rows.filter(r => r.visitType === "existing").length;
   const maleCount     = rows.filter(r => r.patient?.gender === "Male").length;
   const femaleCount   = rows.filter(r => r.patient?.gender === "Female").length;
 
@@ -90,7 +87,7 @@ export default function PatientsPage() {
           <span className="text-sm text-gray-500">{todayDisplay}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => load(1)} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <button onClick={load} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
           <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
@@ -109,9 +106,9 @@ export default function PatientsPage() {
         {/* Stat cards */}
         <div className="grid grid-cols-5 gap-4">
           {[
-            { label: "TOTAL",    value: rows.length,     sub: "visits loaded" },
+            { label: "TOTAL",    value: rows.length,     sub: "visits" },
             { label: "NEW",      value: newCount,         sub: `${rows.length ? Math.round(newCount/rows.length*100) : 0}% of total` },
-            { label: "EXISTING", value: existingCount,    sub: "follow-ups" },
+            { label: "EXISTING", value: existingCount,    sub: "returning patients" },
             { label: "MALE",     value: maleCount,        sub: `${rows.length ? Math.round(maleCount/rows.length*100) : 0}%` },
             { label: "FEMALE",   value: femaleCount,      sub: `${rows.length ? Math.round(femaleCount/rows.length*100) : 0}%` },
           ].map(c => (
@@ -168,7 +165,7 @@ export default function PatientsPage() {
                     <td colSpan={10} className="text-center py-12 text-gray-400 text-sm">No records found</td>
                   </tr>
                 ) : filtered.map(r => {
-                  const isNew = r.type === "consultation";
+                  const isNew = r.visitType === "new";
                   return (
                     <tr key={r._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="px-5 py-3.5 text-xs font-mono text-gray-500">
@@ -192,38 +189,23 @@ export default function PatientsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">
-                        {r.doctor?.name || "—"}
+                        {r.doctor?.name || r.department || "—"}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">{r.date}</td>
                       <td className="px-5 py-3.5 text-sm text-gray-600">
-                        {METHOD_LABEL[r.method?.toLowerCase() || ""] || r.method || "—"}
+                        {r.payment ? (METHOD_LABEL[r.payment.method?.toLowerCase() || ""] || r.payment.method || "—") : (
+                          <span className="text-amber-600">Pending</span>
+                        )}
                       </td>
-                      <td className="px-5 py-3.5 text-sm font-semibold text-gray-900">{fmt(r.amount)}</td>
+                      <td className="px-5 py-3.5 text-sm font-semibold text-gray-900">
+                        {r.payment ? fmt(r.payment.amount) : "—"}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-
-          {/* Pagination */}
-          {total > LIMIT && (
-            <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100">
-              <p className="text-sm text-gray-500">
-                Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of {total}
-              </p>
-              <div className="flex gap-2">
-                <button onClick={() => load(page - 1)} disabled={page === 1}
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">
-                  Prev
-                </button>
-                <button onClick={() => load(page + 1)} disabled={page * LIMIT >= total}
-                  className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

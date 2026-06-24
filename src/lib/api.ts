@@ -71,6 +71,12 @@ export const apiGetTransactions      = (params?: any) => {
 };
 export const apiGetMonthlyTrend      = ()    => request("/revenue/monthly-trend");
 
+// ── Queue / visits ────────────────────────────────────────────────────────────
+export const apiGetQueueHistory = (params?: { date?: string; to?: string }) => {
+  const q = params ? "?" + new URLSearchParams(params as any).toString() : "";
+  return request(`/queue/history${q}`);
+};
+
 // ── Revenue — Tier 2 ─────────────────────────────────────────────────────────
 export const apiGetDailyGraph = (
   opts: { period: "days"|"week"|"month"|"year"|"day"; days?: 7|14|30; date?: string } = { period:"days", days:7 }
