@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, Activity } from "lucide-react";
 import { apiAdminLogin } from "@/lib/api";
+import { touchActivity } from "@/lib/session";
 
 const AdminAuthPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const AdminAuthPage = () => {
       const data = await apiAdminLogin(email, password);
       localStorage.setItem("cliniq_token", data.token);
       localStorage.setItem("cliniq_user",  JSON.stringify(data.user));
+      touchActivity();
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed");

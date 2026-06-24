@@ -2,12 +2,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AdminAuthPage  from "@/pages/admin/AdminAuthPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound       from "@/pages/NotFound";
+import { isSessionExpired, clearSession } from "@/lib/session";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
+// A refresh within 15 minutes of the last interaction keeps the session;
+// after 15 idle minutes, a refresh drops back to login.
 const requireAdmin = (element: JSX.Element): JSX.Element => {
   const token = localStorage.getItem("cliniq_token");
   const user  = JSON.parse(localStorage.getItem("cliniq_user") || "null");
   if (!token || !user || user.role !== "admin") return <Navigate to="/login" replace />;
+  if (isSessionExpired()) { clearSession(); return <Navigate to="/login" replace />; }
   return element;
 };
 

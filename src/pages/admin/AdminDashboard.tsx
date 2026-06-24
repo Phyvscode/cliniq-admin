@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { touchActivity, clearSession } from "@/lib/session";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Pill, Stethoscope, UserCheck, Plus, Eye, EyeOff,
@@ -2686,9 +2687,22 @@ const AdminDashboard = () => {
     apiGetTier().then(r => setTier(r.tier ?? 0)).catch(() => {});
   }, []);
 
+  // Track activity so a refresh after 15 idle minutes drops back to login
+  // (the actual check happens in App.tsx's route guard on mount/refresh).
+  useEffect(() => {
+    touchActivity();
+    let lastWrite = Date.now();
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - lastWrite > 5000) { lastWrite = now; touchActivity(); }
+    };
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach(e => window.addEventListener(e, onActivity));
+    return () => events.forEach(e => window.removeEventListener(e, onActivity));
+  }, []);
+
   const handleLogout = () => {
-    localStorage.removeItem("cliniq_token");
-    localStorage.removeItem("cliniq_user");
+    clearSession();
     navigate("/login");
   };
 
