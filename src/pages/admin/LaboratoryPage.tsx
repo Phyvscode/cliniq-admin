@@ -16,15 +16,9 @@ const fmt = (n: number) =>
 
 const todayDisplay = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
-interface LabStats {
-  totalTests:    number;
-  completed:     number;
-  pending:       number;
-  revenue:       number;
-  revenueChange: number;
-}
-interface TestEntry { name: string; count: number; revenue: number; }
-interface DoctorReferral { doctorName: string; specialization: string; tests: number; revenue: number; }
+interface LabStats { totalTests: number; revenue: number; pending: number; }
+interface TestEntry { name: string; count: number; }
+interface DoctorReferral { doctorName: string; tests: number; revenue: number; }
 
 export default function LaboratoryPage() {
   const [stats,      setStats]      = useState<LabStats | null>(null);
@@ -35,45 +29,20 @@ export default function LaboratoryPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [st, tt, prx] = await Promise.allSettled([
-        get("/lab/analytics/stats?period=today"),
-        get("/lab/analytics/tests?period=month&limit=7"),
-        get("/prescriptions"),
-      ]);
-
-      if (st.status === "fulfilled") setStats(st.value.stats || st.value);
-      if (tt.status === "fulfilled") setTests(tt.value.tests || []);
-
-      // Build doctor referrals from prescriptions with lab tests
-      if (prx.status === "fulfilled") {
-        const prescriptions: any[] = prx.value.prescriptions || [];
-        const refMap: Record<string, DoctorReferral> = {};
-        for (const p of prescriptions) {
-          const labTests: string[] = p.labTests?.tests || p.investigations || [];
-          if (labTests.length === 0) continue;
-          const key = p.doctorName || "Unknown";
-          if (!refMap[key]) {
-            refMap[key] = { doctorName: key, specialization: "", tests: 0, revenue: 0 };
-          }
-          refMap[key].tests   += labTests.length;
-          refMap[key].revenue += labTests.length * 400; // avg ₹400 per test
-        }
-        setReferrals(Object.values(refMap).sort((a, b) => b.tests - a.tests));
-      }
+      const d = await get("/lab/analytics");
+      setStats(d.stats || null);
+      setTests(d.tests || []);
+      setReferrals(d.referrals || []);
     } catch {}
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const profitMargin = 40;
-  const profit       = Math.round((stats?.revenue || 0) * (profitMargin / 100));
-
   const STAT_CARDS = [
-    { label: "TOTAL TESTS",     value: String(stats?.totalTests || 0),    sub: "vs yesterday" },
-    { label: "REVENUE",         value: fmt(stats?.revenue || 0),           sub: "vs yesterday" },
-    { label: "PROFIT",          value: fmt(profit),                        sub: `${profitMargin}% margin` },
-    { label: "PENDING REPORTS", value: String(stats?.pending || 0),        sub: "ETA <2h" },
+    { label: "TOTAL TESTS",     value: String(stats?.totalTests || 0) },
+    { label: "REVENUE COLLECTED", value: fmt(stats?.revenue || 0) },
+    { label: "FEES PENDING",    value: String(stats?.pending || 0) },
   ];
 
   return (
@@ -103,12 +72,11 @@ export default function LaboratoryPage() {
 
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
         {/* Stat cards */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {STAT_CARDS.map(c => (
             <div key={c.label} className="bg-white rounded-xl border border-gray-100 px-5 py-4">
               <p className="text-[10px] font-semibold text-gray-400 tracking-wider">{c.label}</p>
               <p className="text-2xl font-bold text-gray-900 mt-1.5">{c.value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{c.sub}</p>
             </div>
           ))}
         </div>
@@ -148,10 +116,7 @@ export default function LaboratoryPage() {
             <div className="divide-y divide-gray-50">
               {referrals.map(r => (
                 <div key={r.doctorName} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{r.doctorName}</p>
-                    {r.specialization && <p className="text-xs text-gray-400 mt-0.5">{r.specialization}</p>}
-                  </div>
+                  <p className="text-sm font-semibold text-gray-900">{r.doctorName}</p>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-gray-900">{r.tests} tests</p>
                     <p className="text-xs text-gray-400">{fmt(r.revenue)} revenue</p>

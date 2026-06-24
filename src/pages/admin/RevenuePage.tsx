@@ -84,14 +84,13 @@ export default function RevenuePage() {
   );
 
   const headlines = [
-    { label: "TODAY",      value: fmtShort(rev?.today  ?? 0), sub: "vs yesterday",  change: 8.4  },
-    { label: "THIS WEEK",  value: fmtShort(rev?.week   ?? 0), sub: "vs last week",  change: 5.2  },
-    { label: "THIS MONTH", value: fmtShort(rev?.month  ?? 0), sub: "vs last month", change: 12.1 },
-    { label: "THIS YEAR",  value: fmtShort(rev?.year   ?? 0), sub: "vs last year",  change: 18.6 },
-    { label: "PENDING",    value: fmtShort(rev?.pending ?? 0), sub: "vs yesterday", change: -3.1 },
+    { label: "TODAY",      value: fmtShort(rev?.today  ?? 0) },
+    { label: "THIS WEEK",  value: fmtShort(rev?.week   ?? 0) },
+    { label: "THIS MONTH", value: fmtShort(rev?.month  ?? 0) },
+    { label: "THIS YEAR",  value: fmtShort(rev?.year   ?? 0) },
+    { label: "PENDING",    value: fmtShort(rev?.pending ?? 0) },
   ];
 
-  const maxDept  = Math.max(...depts.map((d: any) => d.revenue || 0), 1);
   const totalPay = pay.reduce((s: number, p: any) => s + (p.total || p.count || 1), 0);
   const payPie   = pay.slice(0, 4).map((p: any, i: number) => ({
     name: PIE_LABELS[i] || p.method || p._id,
@@ -99,36 +98,13 @@ export default function RevenuePage() {
     pct: Math.round((p.total || p.count || 1) / (totalPay || 1) * 100),
   }));
 
-  const monthlyData = graph.length ? graph : Array.from({ length: 12 }, (_, i) => ({
-    date: `2025-${String(i + 1).padStart(2, "0")}-01`,
-    revenue: Math.floor(Math.random() * 5000000 + 3000000),
-  }));
-
-  const hourlyData = hourly.length ? hourly : Array.from({ length: 12 }, (_, i) => ({
-    hour: `${String(i * 2).padStart(2, "0")}:00`,
-    revenue: Math.floor(Math.random() * 30000 + 5000),
-  }));
-
-  const deptList = depts.length ? depts : [
-    { department: "Cardiology",      revenue: 624000 },
-    { department: "Orthopedics",     revenue: 412000 },
-    { department: "General Medicine",revenue: 380000 },
-    { department: "Pediatrics",      revenue: 245000 },
-    { department: "Dermatology",     revenue: 196000 },
-    { department: "ENT",             revenue: 142000 },
-  ];
+  const monthlyData = graph;
+  const hourlyData  = hourly;
+  const deptList    = depts;
+  const doctorList  = doctors;
 
   const maxDeptRev = Math.max(...deptList.map((d: any) => d.revenue || 0), 1);
   const totalDept  = deptList.reduce((s: number, d: any) => s + (d.revenue || 0), 0);
-
-  const doctorList = doctors.length ? doctors : [
-    { name: "Ananya Sharma",  specialization: "Cardiology",      totalRevenue: 62400,  patientCount: 42, share: 22 },
-    { name: "Rahul Mehta",    specialization: "Orthopedics",     totalRevenue: 48900,  patientCount: 31, share: 17 },
-    { name: "Sarah Joseph",   specialization: "Pediatrics",      totalRevenue: 41200,  patientCount: 38, share: 14 },
-    { name: "Vikram Khanna",  specialization: "General Medicine", totalRevenue: 39200, patientCount: 56, share: 13 },
-    { name: "Arjun Iyer",     specialization: "Pulmonology",     totalRevenue: 32800,  patientCount: 18, share: 11 },
-    { name: "Priya Rao",      specialization: "Dermatology",     totalRevenue: 24600,  patientCount: 29, share: 8  },
-  ];
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#f8f9fc]">
@@ -175,19 +151,23 @@ export default function RevenuePage() {
                 <button className="text-xs bg-blue-600 text-white rounded-lg px-3 py-1.5">PDF</button>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={monthlyData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
-                  tickFormatter={(v: string) => {
-                    try { return new Date(v).toLocaleDateString("en-IN", { month: "short" }); } catch { return v; }
-                  }} />
-                <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
-                  tickFormatter={(v: number) => `${(v / 100000).toFixed(0)}L`} />
-                <Tooltip formatter={(v: any) => [fmtShort(v), "Revenue"]} />
-                <Line type="monotone" dataKey="revenue" stroke="#3b5bdb" strokeWidth={2} dot={{ r: 3, fill: "#3b5bdb" }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {monthlyData.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-sm text-gray-400">No revenue recorded yet</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={monthlyData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
+                    tickFormatter={(v: string) => {
+                      try { return new Date(v).toLocaleDateString("en-IN", { month: "short" }); } catch { return v; }
+                    }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
+                    tickFormatter={(v: number) => `${(v / 100000).toFixed(0)}L`} />
+                  <Tooltip formatter={(v: any) => [fmtShort(v), "Revenue"]} />
+                  <Line type="monotone" dataKey="revenue" stroke="#3b5bdb" strokeWidth={2} dot={{ r: 3, fill: "#3b5bdb" }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           <div className="bg-white border border-gray-100 rounded-xl p-4">
@@ -236,15 +216,19 @@ export default function RevenuePage() {
               <button className="text-xs bg-blue-600 text-white rounded-lg px-3 py-1.5">PDF</button>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={hourlyData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
-                tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: any) => [fmtShort(v), "Revenue"]} />
-              <Bar dataKey="revenue" fill="#3b5bdb" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {hourlyData.length === 0 ? (
+            <div className="h-[180px] flex items-center justify-center text-sm text-gray-400">No revenue recorded yet</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={hourlyData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false}
+                  tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v: any) => [fmtShort(v), "Revenue"]} />
+                <Bar dataKey="revenue" fill="#3b5bdb" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Department Revenue + Doctor Revenue */}
@@ -257,25 +241,29 @@ export default function RevenuePage() {
                 <button className="text-xs bg-blue-600 text-white rounded-lg px-3 py-1.5">PDF</button>
               </div>
             </div>
-            <div className="space-y-3">
-              {deptList.map((d: any) => {
-                const pct = Math.round((d.revenue || 0) / maxDeptRev * 100);
-                const share = Math.round((d.revenue || 0) / (totalDept || 1) * 100);
-                return (
-                  <div key={d.department}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-700">{d.department}</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        {fmtShort(d.revenue || 0)} · <span className="text-gray-400">{share}%</span>
-                      </span>
+            {deptList.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No revenue recorded yet</p>
+            ) : (
+              <div className="space-y-3">
+                {deptList.map((d: any) => {
+                  const pct = Math.round((d.revenue || 0) / maxDeptRev * 100);
+                  const share = Math.round((d.revenue || 0) / (totalDept || 1) * 100);
+                  return (
+                    <div key={d.department}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-gray-700">{d.department}</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {fmtShort(d.revenue || 0)} · <span className="text-gray-400">{share}%</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="bg-white border border-gray-100 rounded-xl p-4">
@@ -286,25 +274,36 @@ export default function RevenuePage() {
                 <button className="text-xs bg-blue-600 text-white rounded-lg px-3 py-1.5">PDF</button>
               </div>
             </div>
-            <div className="space-y-3">
-              {doctorList.map((d: any, i: number) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                    <span className="text-blue-700 text-xs font-semibold">
-                      {(d.name || "D").split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Dr. {d.name}</p>
-                    <p className="text-xs text-gray-400">{d.specialization}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900">{fmtShort(d.totalRevenue || d.revenue || 0)}</p>
-                    <p className="text-xs text-emerald-500">{d.share || "—"}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {doctorList.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No revenue recorded yet</p>
+            ) : (
+              <div className="space-y-3">
+                {(() => {
+                  const totalDoc = doctorList.reduce((s: number, d: any) => s + (d.totalRevenue || d.revenue || 0), 0);
+                  return doctorList.map((d: any, i: number) => {
+                    const rev = d.totalRevenue || d.revenue || 0;
+                    const share = Math.round(rev / (totalDoc || 1) * 100);
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                          <span className="text-blue-700 text-xs font-semibold">
+                            {(d.name || "D").split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">Dr. {d.name}</p>
+                          <p className="text-xs text-gray-400">{d.specialization}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-900">{fmtShort(rev)}</p>
+                          <p className="text-xs text-emerald-500">{share}%</p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
           </div>
         </div>
       </div>
