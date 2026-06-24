@@ -7,12 +7,15 @@ import { isSessionExpired, clearSession } from "@/lib/session";
 // ─── Auth guard ───────────────────────────────────────────────────────────────
 // A refresh within 15 minutes of the last interaction keeps the session;
 // after 15 idle minutes, a refresh drops back to login.
-const requireAdmin = (element: JSX.Element): JSX.Element => {
+// This is a real component (not a plain function called inline while building
+// route elements) so the check re-runs every time this route is actually
+// visited, instead of being evaluated once and frozen for the app's lifetime.
+const RequireAdmin = ({ children }: { children: JSX.Element }): JSX.Element => {
   const token = localStorage.getItem("cliniq_token");
   const user  = JSON.parse(localStorage.getItem("cliniq_user") || "null");
   if (!token || !user || user.role !== "admin") return <Navigate to="/login" replace />;
   if (isSessionExpired()) { clearSession(); return <Navigate to="/login" replace />; }
-  return element;
+  return children;
 };
 
 const App = () => (
@@ -20,7 +23,7 @@ const App = () => (
     <Routes>
       <Route path="/"                element={<Navigate to="/login" replace />} />
       <Route path="/login"           element={<AdminAuthPage />} />
-      <Route path="/dashboard"       element={requireAdmin(<AdminDashboard />)} />
+      <Route path="/dashboard"       element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
       {/* Legacy redirect from old path */}
       <Route path="/admin"           element={<Navigate to="/login"     replace />} />
       <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
